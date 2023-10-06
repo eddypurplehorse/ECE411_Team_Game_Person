@@ -6,4 +6,4 @@ Members:
 * Paul C
 * Sam H
 
-## our project is still yet to me determined
+## Project is still to be determined
