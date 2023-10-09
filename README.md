@@ -6,4 +6,5 @@ Members:
 * Paul C
 * Sam H
 
-## Project is still to be determined
+## Project
+A wearable PCB to help alert people, with weak vision or those hard of hearing, of any nearby objects.
