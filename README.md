@@ -1,4 +1,4 @@
-![alt text](https://github.com/eddypurplehorse/ECE411_Team_Gamers/blob/main/kicad_schematic/LCD_GAME_SCHEMATIC.png?raw=true)
+![alt text](https://github.com/eddypurplehorse/ECE411_Team_Gamers/blob/main/photos/project_prototype.png?raw=true)
 
 # ECE 411 Team 10 - Project LCD GAME 
 
