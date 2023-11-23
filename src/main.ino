@@ -1,4 +1,4 @@
-/**
+ /**
  * @file    main.ino 
  * @author  Team 10; Alex, Eddy, Paul, Same 
  * @brief   A flappy bird clone game
@@ -9,69 +9,25 @@
  * 
  */
 
-#include <Arduino_FreeRTOS.h>
 #include "graphics.h"
+#define TERRAIN_WIDTH 16
+
+char terrain_upper[TERRAIN_WIDTH + 1];
+char terrain_lower[TERRAIN_WIDTH + 1];
+char player_terrain_overlap[OVERLAP_ARRAY_SIZE];
 
 const int left_button_pin = 9;
 const int right_button_pin = 8;
-
-// concurent function
-void TaskBlink( void *pvParameters );
-void LCD_Game( void *pvParameters );
+unsigned int game_speed = 500;
+unsigned long long total_frames_drawn = 0;
 
 
 void setup() {
-
     // GPIO 2
-    attachInterrupt(0, right_button_is_pushed, FALLING);
+    attachInterrupt(INTERRUPT_ONE, right_button_is_pushed, RISING);
     // GPIO 3
-    attachInterrupt(1, left_button_is_pushed, FALLING);
+    attachInterrupt(INTERRUPT_TWO, left_button_is_pushed, RISING);
   
-    // Now set up two tasks to run independently.
-    xTaskCreate(
-        TaskBlink,  
-        "Blink",   // A name just for humans
-        128,       // This stack size can be checked & adjusted by reading the Stack Highwater
-        NULL,
-        0,         // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        NULL 
-    );
-
-    xTaskCreate(
-        LCD_Game,
-        "game",
-        128,
-        NULL,
-        3,
-        NULL
-    );
-
-}
-
-void loop(){
-
-}
-
-
-void TaskBlink(void *pvParameters) {
-    (void) pvParameters;
-
-    // initialize digital LED_BUILTIN on pin 13 as an output.
-    pinMode(LED_BUILTIN, OUTPUT);
-
-    // A Task shall never return or exit.
-    while(1) {
-        digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-        vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
-        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-        vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
-    }
-}
-
-
-void LCD_Game(void *pvParameters) {
-    (void) pvParameters;
-    
     // set up the LCD's number of columns and rows:
     lcd.begin(16, 2);
 
@@ -81,62 +37,94 @@ void LCD_Game(void *pvParameters) {
 
     // set up graphics
     initialize_graphics();
+
+}
+
+void loop(){
     playing_game = false;
-    
-    while (true) {
+    unsigned int player_position = HERO_POSITION_RUN_LOWER_2;
+    static byte new_terrain_type = TERRAIN_EMPTY;
+    byte duration_between_terrain = 0;
+    unsigned int score = 0;
+    bool collision_happened = false;
 
-        while (!playing_game) {
-            draw_home_screen();
-            if (left_button_pushed || right_button_pushed) {
-                playing_game = true;
-                right_button_pushed = false;
-                left_button_pushed = false;
-                lcd.clear();
-                break;
-            }
-        }
-    
-        while (playing_game) {
-            lcd.setCursor(FIRST_COLUMN, TOP_ROW);
-            lcd.print("playing...");
+    // set up graphics
+    initialize_graphics();
+
+    while (!playing_game) {
+        draw_home_screen();
+        if (left_button_was_pushed || right_button_was_pushed) {
+            playing_game = true;
+            right_button_was_pushed = false;
+            left_button_was_pushed = false;
             lcd.clear();
-            int i = 1;
+            break;
+        }
+        delay(100);
+    }
+    
+    while (playing_game) {
 
-            while (true) {
-           
-                draw_player(i, terrain_upper, terrain_lower);
-                if (right_button_pushed) {
-                    i++;
-
-                    if (i > 12)
-                        i = 12;
-
-                    right_button_pushed = false;
-                }
-
-                if (left_button_pushed) {
-                    i--;
-
-                    if (i < 1)
-                        i = 1;
-
-                    left_button_pushed = false;
-                }
-                lcd.setCursor(10, TOP_ROW);
-                lcd.print(i);
-                vTaskDelay( 100 / portTICK_PERIOD_MS );
-                lcd.clear();
+        if (duration_between_terrain == 0) {
+            if (new_terrain_type == TERRAIN_EMPTY) {
+                new_terrain_type = (random(3) == 0) ? TERRAIN_UPPER_BLOCK : TERRAIN_LOWER_BLOCK;
+                duration_between_terrain = 5 + random(10);
+            }
+            else {
+                new_terrain_type = TERRAIN_EMPTY;
+                duration_between_terrain = 10 + random(10);
             }
         }
+
+        if (player_position < MIN_HERO_POSITION) {
+            player_position = MIN_HERO_POSITION;
+        }
+
+        draw_map(terrain_upper, terrain_lower, new_terrain_type, player_terrain_overlap);
+        collision_happened = draw_player(player_position, terrain_upper, terrain_lower, score);
+
+
+        if (collision_happened) {
+            break; // game over
+        }
+
+        if (total_frames_drawn % 3 == 0) {
+          player_position--;
+        }
+
+        if (total_frames_drawn % 16 == 0) {
+            score++;
+            game_speed -= 10;
+
+            if (game_speed < 15) {
+              game_speed = 15;
+            }
+        }
+
+        if (right_button_was_pushed) {
+            right_button_was_pushed = false;
+            player_position++;
+
+            if (player_position > MAX_HERO_POSITION) {
+                player_position = MAX_HERO_POSITION;
+            }
+        }
+
         
+        delay(game_speed);
+        total_frames_drawn++;
+        duration_between_terrain--;
     }
+
+    draw_end_game(score);
+    delay(2000);
 }
 
 
-bool left_button_is_pushed() {
-    left_button_pushed = true;
+void left_button_is_pushed() {
+    left_button_was_pushed = true;
 }
 
-bool right_button_is_pushed() {
-    right_button_pushed = true;
+void right_button_is_pushed() {
+    right_button_was_pushed = true;
 }
