@@ -395,8 +395,9 @@ void draw_map(char *terrain_upper, char *terrain_lower, byte new_terrain, char *
 void HW_firmware_test() {
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 16; j++) {
-            lcd.print(" ");
-            delay(100);
+            lcd.setCursor(j, i);
+            lcd.print("\xff");
+            delay(200);
             lcd.clear();
         }
         lcd.clear();
