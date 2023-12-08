@@ -392,4 +392,16 @@ void draw_map(char *terrain_upper, char *terrain_lower, byte new_terrain, char *
     generate_lower(terrain_lower, new_terrain, overlap);
 }
 
+void HW_firmware_test() {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 16; j++) {
+            lcd.print(" ");
+            delay(100);
+            lcd.clear();
+        }
+        lcd.clear();
+    }
+    lcd.clear();
+}
+
 #endif

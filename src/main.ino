@@ -18,7 +18,7 @@ char player_terrain_overlap[OVERLAP_ARRAY_SIZE];
 
 const int left_button_pin = 9;
 const int right_button_pin = 8;
-unsigned int game_speed = 500;
+unsigned int game_speed = 400;
 unsigned long long total_frames_drawn = 0;
 
 
@@ -38,6 +38,9 @@ void setup() {
     // set up graphics
     initialize_graphics();
 
+    // HW SW test
+    HW_firmware_test();
+
 }
 
 void loop(){
@@ -47,6 +50,7 @@ void loop(){
     byte duration_between_terrain = 0;
     unsigned int score = 0;
     bool collision_happened = false;
+    game_speed = 400;
 
     // set up graphics
     initialize_graphics();
